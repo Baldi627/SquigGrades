@@ -25,6 +25,7 @@
             saveMenuItem = new ToolStripMenuItem();
             loadMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
+            settingsToolStripMenuItem = new ToolStripMenuItem();
             actionsMenu = new ToolStripMenuItem();
             addStudentMenuItem = new ToolStripMenuItem();
             addAssignmentMenuItem = new ToolStripMenuItem();
@@ -61,7 +62,7 @@
             // 
             // fileMenu
             // 
-            fileMenu.DropDownItems.AddRange(new ToolStripItem[] { saveMenuItem, loadMenuItem, aboutToolStripMenuItem });
+            fileMenu.DropDownItems.AddRange(new ToolStripItem[] { saveMenuItem, loadMenuItem, aboutToolStripMenuItem, settingsToolStripMenuItem });
             fileMenu.Name = "fileMenu";
             fileMenu.Size = new Size(46, 24);
             fileMenu.Text = "File";
@@ -69,21 +70,28 @@
             // saveMenuItem
             // 
             saveMenuItem.Name = "saveMenuItem";
-            saveMenuItem.Size = new Size(133, 26);
+            saveMenuItem.Size = new Size(224, 26);
             saveMenuItem.Text = "Save";
             // 
             // loadMenuItem
             // 
             loadMenuItem.Name = "loadMenuItem";
-            loadMenuItem.Size = new Size(133, 26);
+            loadMenuItem.Size = new Size(224, 26);
             loadMenuItem.Text = "Load";
             // 
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new Size(133, 26);
+            aboutToolStripMenuItem.Size = new Size(224, 26);
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
+            // 
+            // settingsToolStripMenuItem
+            // 
+            settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            settingsToolStripMenuItem.Size = new Size(224, 26);
+            settingsToolStripMenuItem.Text = "Settings";
+            settingsToolStripMenuItem.Click += settingsToolStripMenuItem_Click;
             // 
             // actionsMenu
             // 
@@ -130,5 +138,6 @@
         }
         private System.ComponentModel.IContainer components;
         private ToolStripMenuItem aboutToolStripMenuItem;
+        private ToolStripMenuItem settingsToolStripMenuItem;
     }
 }
