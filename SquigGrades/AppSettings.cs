@@ -13,7 +13,8 @@ namespace SquigGrades
         public class AppSettings
         {
             public bool AllowPrereleaseUpdates { get; set; } = false;
-
+            public string BackgroundColor { get; set; } = "#FFFFFF"; // Default: white
+            public string ForegroundColor { get; set; } = "#000000"; // Default: black
             private static readonly string SettingsFilePath =
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SquigGrades", "settings.json");
 

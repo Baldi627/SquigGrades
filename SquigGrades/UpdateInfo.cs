@@ -12,4 +12,5 @@ namespace SquigGrades
         public bool IsPrerelease { get; set; }
     }
 
+
 }

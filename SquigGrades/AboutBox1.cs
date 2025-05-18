@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SquigGrades.SquigGrades;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -11,15 +12,18 @@ namespace SquigGrades
 {
     partial class AboutBox1 : Form
     {
+        private AppSettings appSettings = AppSettings.Load();
         public AboutBox1()
         {
             InitializeComponent();
             this.Text = String.Format("About {0}", AssemblyTitle);
             this.labelProductName.Text = AssemblyProduct;
-            this.labelVersion.Text = String.Format("Version {0}", AssemblyVersion);
+            this.labelVersion.Text = String.Format("Version {0}", Application.ProductVersion.Split('+')[0]);
             this.labelCopyright.Text = AssemblyCopyright;
             this.labelCompanyName.Text = AssemblyCompany;
             this.textBoxDescription.Text = AssemblyDescription;
+            ForeColor = ColorTranslator.FromHtml(appSettings.ForegroundColor);
+            BackColor = ColorTranslator.FromHtml(appSettings.BackgroundColor);
         }
 
         #region Assembly Attribute Accessors

@@ -1,3 +1,4 @@
+using SquigGrades.SquigGrades;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -5,19 +6,29 @@ namespace SquigGrades
 {
     public partial class Form1 : Form
     {
+        private AppSettings appSettings = AppSettings.Load();
         private Gradebook gradebook = new();
         private string? currentFilePath = null; // Stores the current file path
         private bool isModified = false;       // Tracks whether the file has been modified
         private bool allowPrereleaseUpdates = false;
+        private float initialFontSize;
+        private Size initialFormSize;
 
         public Form1()
         {
             InitializeComponent();
             InitializeMenuEventHandlers();
             InitializeData();
+            initialFontSize = this.Font.Size;
+            initialFormSize = this.ClientSize;
+            this.Resize += Form1_Resize;
             gradebook.GradebookModified += Gradebook_GradebookModified;
             dgvGrades.CellValueChanged += DgvGrades_CellValueChanged;
             btnRemoveAssignment.Click += BtnRemoveAssignment_Click; // Add event handler
+            ForeColor = ColorTranslator.FromHtml(appSettings.ForegroundColor);
+            BackColor = ColorTranslator.FromHtml(appSettings.BackgroundColor);
+            dgvGrades.DefaultCellStyle.BackColor = ColorTranslator.FromHtml(appSettings.BackgroundColor);
+            dgvGrades.DefaultCellStyle.ForeColor = ColorTranslator.FromHtml(appSettings.ForegroundColor);
             CheckForUpdatesAsync();
         }
 
@@ -154,17 +165,10 @@ namespace SquigGrades
             dgvGrades.Columns.Add("FinalGrade", "Final Grade (%)");
             dgvGrades.Columns.Add("LetterGrade", "Letter Grade");
 
-            // Set fixed column width for the first three columns
-            foreach (DataGridViewColumn column in dgvGrades.Columns)
-            {
-                column.Width = 150;
-            }
-
             // Add columns for each assignment with the maximum score in the header
             foreach (var assignment in gradebook.Assignments)
             {
                 var column = dgvGrades.Columns.Add(assignment.Name, $"{assignment.Name} ({assignment.MaxScore})");
-                dgvGrades.Columns[column].Width = 150; // Set fixed width for assignment columns
             }
 
             // Populate rows with student data
@@ -352,9 +356,9 @@ namespace SquigGrades
                     return;
                 }
 
-                long latestVersionInt = ConvertVersionToInt(updateInfo.Version);
-                long currentVersionInt = ConvertVersionToInt(AssemblyVersion);
-
+                var latestVersion = new VersionWithSuffix(updateInfo.Version);
+                var currentVersion = new VersionWithSuffix(Application.ProductVersion.Split('+')[0]);
+                Debug.WriteLine(currentVersion);
                 // Handle prerelease versions
                 if (updateInfo.IsPrerelease && !allowPrereleaseUpdates)
                 {
@@ -362,7 +366,7 @@ namespace SquigGrades
                     return;
                 }
 
-                if (latestVersionInt > currentVersionInt)
+                if (latestVersion.CompareTo(currentVersion) > 0)
                 {
                     string prereleaseMessage = updateInfo.IsPrerelease
                         ? "\n\nNote: This is a prerelease version."
@@ -404,43 +408,80 @@ namespace SquigGrades
                 return Assembly.GetExecutingAssembly().GetName().Version.ToString();
             }
         }
-        private long ConvertVersionToInt(string version)
-        {
-            try
-            {
-                // Validate the version string format
-                if (string.IsNullOrWhiteSpace(version) || !version.Contains("."))
-                {
-                    throw new FormatException("Invalid version format.");
-                }
-
-                // Split the version into segments and pad each segment to 3 digits
-                var segments = version.Split('.').Select(s =>
-                {
-                    if (!int.TryParse(s, out _))
-                    {
-                        throw new FormatException($"Invalid version segment: {s}");
-                    }
-
-                    // Pad each segment to 3 digits
-                    return s.PadLeft(3, '0');
-                });
-
-                // Concatenate the segments into a single string and parse as long
-                return long.Parse(string.Join("", segments));
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error parsing version: {ex.Message}", version + ": Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw; // Re-throw the exception to ensure it is logged or handled upstream
-            }
-        }
-
+        
         private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SettingsForm settingsForm = new SettingsForm();
             settingsForm.ShowDialog();
         }
-    }
+        private void SettingsForm_ColorSettingsChanged(object sender, EventArgs e)
+        {
+            // Reapply colors when settings change
+            ApplyAppColors();
+        }
+        private void ApplyAppColors()
+        {
+            this.ForeColor = ColorTranslator.FromHtml(appSettings.ForegroundColor);
+            this.BackColor = ColorTranslator.FromHtml(appSettings.BackgroundColor);
+            dgvGrades.DefaultCellStyle.BackColor = ColorTranslator.FromHtml(appSettings.BackgroundColor);
+            dgvGrades.DefaultCellStyle.ForeColor = ColorTranslator.FromHtml(appSettings.ForegroundColor);
+            // Optionally update other controls as needed
+        }
+        private void Form1_Resize(object? sender, EventArgs e)
+        {
+            // Calculate scale factor based on width and height
+            float scaleFactor = Math.Min(
+                (float)this.ClientSize.Width / initialFormSize.Width,
+                (float)this.ClientSize.Height / initialFormSize.Height);
 
+            float newFontSize = Math.Max(8, initialFontSize * scaleFactor); // Prevent too small font
+
+            // Apply new font size to all controls recursively
+            SetFontRecursive(this, new Font(this.Font.FontFamily, newFontSize, this.Font.Style));
+            dgvGrades.AutoResizeRows(DataGridViewAutoSizeRowsMode.AllCellsExceptHeaders);
+        }
+
+        private void SetFontRecursive(Control control, Font font)
+        {
+            control.Font = font;
+            foreach (Control child in control.Controls)
+            {
+                SetFontRecursive(child, font);
+            }
+        }
+    }
+    // Add this helper class inside your Form1.cs file (outside the Form1 class)
+    public class VersionWithSuffix : IComparable<VersionWithSuffix>
+    {
+        public int[] Numbers { get; }
+        public string? Suffix { get; }
+
+        public VersionWithSuffix(string version)
+        {
+            // Split off suffix
+            var dashIdx = version.IndexOf('-');
+            string numberPart = dashIdx >= 0 ? version.Substring(0, dashIdx) : version;
+            Suffix = dashIdx >= 0 ? version.Substring(dashIdx + 1) : null;
+
+            Numbers = numberPart.Split('.').Select(s => int.TryParse(s, out var n) ? n : 0).ToArray();
+        }
+
+        public int CompareTo(VersionWithSuffix? other)
+        {
+            if (other == null) return 1;
+            int maxLen = Math.Max(Numbers.Length, other.Numbers.Length);
+            for (int i = 0; i < maxLen; i++)
+            {
+                int a = i < Numbers.Length ? Numbers[i] : 0;
+                int b = i < other.Numbers.Length ? other.Numbers[i] : 0;
+                if (a != b) return a.CompareTo(b);
+            }
+            // Numeric parts equal, compare suffixes
+            if (string.IsNullOrEmpty(Suffix) && !string.IsNullOrEmpty(other.Suffix)) return 1; // Release > prerelease
+            if (!string.IsNullOrEmpty(Suffix) && string.IsNullOrEmpty(other.Suffix)) return -1;
+            if (string.IsNullOrEmpty(Suffix) && string.IsNullOrEmpty(other.Suffix)) return 0;
+            // Both have suffixes, compare lexically (or customize for your scheme)
+            return string.Compare(Suffix, other.Suffix, StringComparison.OrdinalIgnoreCase);
+        }
+    }
 }

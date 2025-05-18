@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <FileVersion>2025.1.1</FileVersion>
+    <FileVersion>2025.1.2.0</FileVersion>
     <Company>$(Authors)</Company>
     <Authors>DefaultSquig</Authors>
-    <AssemblyVersion>2025.1.1</AssemblyVersion>
-    <Version>2025.1.1</Version>
+    <AssemblyVersion>2025.1.2.0</AssemblyVersion>
     <Description>A Simple Gradebook app made for goofing around!</Description>
+    <Version>2025.1.2-alpha.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

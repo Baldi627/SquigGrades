@@ -38,14 +38,15 @@
             // 
             dgvGrades.AllowUserToAddRows = false;
             dgvGrades.AllowUserToDeleteRows = false;
+            dgvGrades.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.ColumnHeader;
+            dgvGrades.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCellsExceptHeaders;
             dgvGrades.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvGrades.Dock = DockStyle.Fill;
             dgvGrades.EditMode = DataGridViewEditMode.EditOnEnter;
             dgvGrades.Location = new Point(0, 30);
             dgvGrades.Margin = new Padding(3, 4, 3, 4);
             dgvGrades.Name = "dgvGrades";
-            dgvGrades.RowHeadersWidth = 51;
-            dgvGrades.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+            dgvGrades.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             dgvGrades.Size = new Size(914, 570);
             dgvGrades.TabIndex = 1;
             // 
@@ -70,26 +71,26 @@
             // saveMenuItem
             // 
             saveMenuItem.Name = "saveMenuItem";
-            saveMenuItem.Size = new Size(224, 26);
+            saveMenuItem.Size = new Size(145, 26);
             saveMenuItem.Text = "Save";
             // 
             // loadMenuItem
             // 
             loadMenuItem.Name = "loadMenuItem";
-            loadMenuItem.Size = new Size(224, 26);
+            loadMenuItem.Size = new Size(145, 26);
             loadMenuItem.Text = "Load";
             // 
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new Size(224, 26);
+            aboutToolStripMenuItem.Size = new Size(145, 26);
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // settingsToolStripMenuItem
             // 
             settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            settingsToolStripMenuItem.Size = new Size(224, 26);
+            settingsToolStripMenuItem.Size = new Size(145, 26);
             settingsToolStripMenuItem.Text = "Settings";
             settingsToolStripMenuItem.Click += settingsToolStripMenuItem_Click;
             // 
@@ -120,8 +121,8 @@
             // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
-            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleMode = AutoScaleMode.Inherit;
+            AutoSize = true;
             ClientSize = new Size(914, 600);
             Controls.Add(dgvGrades);
             Controls.Add(menuStrip);
