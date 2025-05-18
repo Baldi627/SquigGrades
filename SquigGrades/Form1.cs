@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Reflection;
+
 namespace SquigGrades
 {
     public partial class Form1 : Form
@@ -5,6 +8,7 @@ namespace SquigGrades
         private Gradebook gradebook = new();
         private string? currentFilePath = null; // Stores the current file path
         private bool isModified = false;       // Tracks whether the file has been modified
+        private bool allowPrereleaseUpdates = false;
 
         public Form1()
         {
@@ -14,6 +18,7 @@ namespace SquigGrades
             gradebook.GradebookModified += Gradebook_GradebookModified;
             dgvGrades.CellValueChanged += DgvGrades_CellValueChanged;
             btnRemoveAssignment.Click += BtnRemoveAssignment_Click; // Add event handler
+            CheckForUpdatesAsync();
         }
 
         private int selectedColumnIndex = -1; // Track the selected column index
@@ -318,6 +323,119 @@ namespace SquigGrades
                 Text = $"Gradebook - Untitled{(isModified ? "*" : "")}";
             }
         }
+        private async Task CheckForUpdatesAsync()
+        {
+            string updateUrl = "https://raw.githubusercontent.com/Baldi627/squig-grades-version-check/refs/heads/main/version.json"; // Replace with your hosted JSON file URL
+            try
+            {
+                using var httpClient = new HttpClient();
+                string jsonResponse = await httpClient.GetStringAsync(updateUrl);
+
+                Debug.WriteLine($"JSON Response: {jsonResponse}");
+
+                // Parse the JSON response
+                var jsonDocument = System.Text.Json.JsonDocument.Parse(jsonResponse);
+                var root = jsonDocument.RootElement;
+
+                // Explicitly set the properties of UpdateInfo
+                var updateInfo = new UpdateInfo
+                {
+                    Version = root.GetProperty("version").GetString() ?? string.Empty,
+                    IsPrerelease = root.GetProperty("isPrerelease").GetBoolean()
+                };
+
+                Debug.WriteLine($"Parsed UpdateInfo: Version={updateInfo.Version}, IsPrerelease={updateInfo.IsPrerelease}");
+
+                if (string.IsNullOrWhiteSpace(updateInfo.Version))
+                {
+                    MessageBox.Show("Error parsing update information.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                long latestVersionInt = ConvertVersionToInt(updateInfo.Version);
+                long currentVersionInt = ConvertVersionToInt(AssemblyVersion);
+
+                // Handle prerelease versions
+                if (updateInfo.IsPrerelease && !allowPrereleaseUpdates)
+                {
+                    // Skip prerelease updates if the user has not opted in
+                    return;
+                }
+
+                if (latestVersionInt > currentVersionInt)
+                {
+                    string prereleaseMessage = updateInfo.IsPrerelease
+                        ? "\n\nNote: This is a prerelease version."
+                        : "";
+
+                    var result = MessageBox.Show(
+                        $"A new version ({updateInfo.Version}) is available.{prereleaseMessage}\n\nWould you like to download it?",
+                        "Update Available",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "https://github.com/Baldi627/SquigGrades/releases", // Replace with your download URL
+                            UseShellExecute = true
+                        });
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("You're using the Latest Version of SquigGrades! Good Jobies!", "No Updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error checking for updates: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+
+
+
+        public string AssemblyVersion
+        {
+            get
+            {
+                return Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            }
+        }
+        private long ConvertVersionToInt(string version)
+        {
+            try
+            {
+                // Validate the version string format
+                if (string.IsNullOrWhiteSpace(version) || !version.Contains("."))
+                {
+                    throw new FormatException("Invalid version format.");
+                }
+
+                // Split the version into segments and pad each segment to 3 digits
+                var segments = version.Split('.').Select(s =>
+                {
+                    if (!int.TryParse(s, out _))
+                    {
+                        throw new FormatException($"Invalid version segment: {s}");
+                    }
+
+                    // Pad each segment to 3 digits
+                    return s.PadLeft(3, '0');
+                });
+
+                // Concatenate the segments into a single string and parse as long
+                return long.Parse(string.Join("", segments));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error parsing version: {ex.Message}", version + ": Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw; // Re-throw the exception to ensure it is logged or handled upstream
+            }
+        }
+
 
 
 
