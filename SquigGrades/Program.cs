@@ -1,3 +1,6 @@
+using Microsoft.Toolkit.Uwp.Notifications;
+using System.Diagnostics;
+using System.Threading.Tasks;
 namespace SquigGrades
 {
     internal static class Program
@@ -8,8 +11,21 @@ namespace SquigGrades
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            // Register toast activation handler
+            ToastNotificationManagerCompat.OnActivated += toastArgs =>
+            {
+                // This runs on a background thread, so marshal to UI if needed
+                var arguments = toastArgs.Argument;
+                if (arguments.Contains("action=downloadUpdate"))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://github.com/Baldi627/SquigGrades/releases",
+                        UseShellExecute = true
+                    });
+                }
+                // "Ignore" does nothing, but you could log or handle as needed
+            };
             ApplicationConfiguration.Initialize();
             Application.Run(new Form1());
         }

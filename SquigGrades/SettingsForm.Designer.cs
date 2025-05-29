@@ -40,6 +40,7 @@
             toolTip1 = new ToolTip(components);
             colorDialog1 = new ColorDialog();
             btnDefautSettings = new Button();
+            notifyIcon1 = new NotifyIcon(components);
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
@@ -141,6 +142,11 @@
             btnDefautSettings.UseVisualStyleBackColor = true;
             btnDefautSettings.Click += btnDefautSettings_Click;
             // 
+            // notifyIcon1
+            // 
+            notifyIcon1.Text = "notifyIcon1";
+            notifyIcon1.Visible = true;
+            // 
             // SettingsForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -174,5 +180,6 @@
         private Button btnBGColor;
         private Button btnFGColor;
         private Button btnDefautSettings;
+        private NotifyIcon notifyIcon1;
     }
 }

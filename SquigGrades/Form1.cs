@@ -280,7 +280,7 @@ namespace SquigGrades
                     {
                         gradebook.RemoveAssignment(assignmentName);
                         RefreshGradeGrid();
-                        MessageBox.Show($"Assignment '{assignmentName}' has been removed.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        Notifier.NotifyNormal($"Assignment '{assignmentName}' has been removed successfully.", "Assignment Removed");
                     }
                 }
             }
@@ -329,7 +329,7 @@ namespace SquigGrades
         }
         private async Task CheckForUpdatesAsync()
         {
-            string updateUrl = "https://raw.githubusercontent.com/Baldi627/squig-grades-version-check/refs/heads/main/version.json"; // Replace with your hosted JSON file URL
+            string updateUrl = "https://raw.githubusercontent.com/Baldi627/squig-grades-version-check/main/version.json";
             try
             {
                 using var httpClient = new HttpClient();
@@ -337,59 +337,53 @@ namespace SquigGrades
 
                 Debug.WriteLine($"JSON Response: {jsonResponse}");
 
-                // Parse the JSON response
-                var jsonDocument = System.Text.Json.JsonDocument.Parse(jsonResponse);
-                var root = jsonDocument.RootElement;
+                // Only support array format
+                var releases = System.Text.Json.JsonSerializer.Deserialize<List<UpdateInfo>>(jsonResponse);
 
-                // Explicitly set the properties of UpdateInfo
-                var updateInfo = new UpdateInfo
+                if (releases == null || releases.Count == 0)
                 {
-                    Version = root.GetProperty("version").GetString() ?? string.Empty,
-                    IsPrerelease = root.GetProperty("isPrerelease").GetBoolean()
-                };
-
-                Debug.WriteLine($"Parsed UpdateInfo: Version={updateInfo.Version}, IsPrerelease={updateInfo.IsPrerelease}");
-
-                if (string.IsNullOrWhiteSpace(updateInfo.Version))
-                {
-                    MessageBox.Show("Error parsing update information.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("No update information found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                var latestVersion = new VersionWithSuffix(updateInfo.Version);
+                // Find the latest stable release
+                var latestStable = releases
+                    .Where(r => !r.IsPrerelease)
+                    .OrderByDescending(r => new VersionWithSuffix(r.Version))
+                    .FirstOrDefault();
+                Debug.WriteLine($"Latest Stable Release: {latestStable?.Version}");
+                // Find the latest release (could be prerelease)
+                var latestAny = releases
+                    .OrderByDescending(r => new VersionWithSuffix(r.Version))
+                    .FirstOrDefault();
+                Debug.WriteLine($"Latest Any Release: {latestAny?.Version}");
                 var currentVersion = new VersionWithSuffix(Application.ProductVersion.Split('+')[0]);
-                Debug.WriteLine(currentVersion);
-                // Handle prerelease versions
-                if (updateInfo.IsPrerelease && !allowPrereleaseUpdates)
-                {
-                    // Skip prerelease updates if the user has not opted in
-                    return;
-                }
 
-                if (latestVersion.CompareTo(currentVersion) > 0)
+                // If prerelease updates are allowed and the latest is a prerelease and newer, notify for prerelease
+                if (appSettings.AllowPrereleaseUpdates && latestAny != null && new VersionWithSuffix(latestAny.Version).CompareTo(currentVersion) > 0)
                 {
-                    string prereleaseMessage = updateInfo.IsPrerelease
-                        ? "\n\nNote: This is a prerelease version."
+                    string prereleaseMessage = latestAny.IsPrerelease
+                        ? "\n\nNote: This is a prerelease version.\nAs such, it is not intended for production use."
                         : "";
 
-                    var result = MessageBox.Show(
-                        $"A new version ({updateInfo.Version}) is available.{prereleaseMessage}\n\nWould you like to download it?",
-                        "Update Available",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Information);
+                    Notifier.NotifyNewUpdate($"A new version of SquigGrades, {latestAny.Version}, is available to Download.", "Update Available", $"{prereleaseMessage}");
+                }
 
-                    if (result == DialogResult.Yes)
-                    {
-                        Process.Start(new ProcessStartInfo
-                        {
-                            FileName = "https://github.com/Baldi627/SquigGrades/releases", // Replace with your download URL
-                            UseShellExecute = true
-                        });
-                    }
+                // Otherwise, only notify for the latest stable release
+                if (latestStable != null && new VersionWithSuffix(latestStable.Version).CompareTo(currentVersion) > 0)
+                {
+                    Notifier.NotifyNewUpdate($"A new stable version of SquigGrades, {latestStable.Version}, is available to Download.", "Update Available", "Please consider updating to the latest stable version.");
                 }
                 else
                 {
-                    MessageBox.Show("You're using the Latest Version of SquigGrades! Good Jobies!", "No Updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (appSettings.AllowPrereleaseUpdates)
+                    {
+                        Notifier.NotifyNormal("You are currently using the Latest version of SquigGrades!", "No Updates");
+                    }
+                    else
+                    {
+                        Notifier.NotifyNormal("You are currently using the Latest Stable build of SquigGrades", "No Updates");
+                    }
                 }
             }
             catch (Exception ex)
@@ -482,6 +476,12 @@ namespace SquigGrades
             if (string.IsNullOrEmpty(Suffix) && string.IsNullOrEmpty(other.Suffix)) return 0;
             // Both have suffixes, compare lexically (or customize for your scheme)
             return string.Compare(Suffix, other.Suffix, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public override string ToString()
+        {
+            var version = string.Join('.', Numbers);
+            return string.IsNullOrEmpty(Suffix) ? version : $"{version}-{Suffix}";
         }
     }
 }

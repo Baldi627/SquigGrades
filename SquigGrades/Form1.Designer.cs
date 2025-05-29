@@ -46,6 +46,7 @@
             dgvGrades.Location = new Point(0, 30);
             dgvGrades.Margin = new Padding(3, 4, 3, 4);
             dgvGrades.Name = "dgvGrades";
+            dgvGrades.RightToLeft = RightToLeft.No;
             dgvGrades.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             dgvGrades.Size = new Size(914, 570);
             dgvGrades.TabIndex = 1;
