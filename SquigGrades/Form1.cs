@@ -10,7 +10,6 @@ namespace SquigGrades
         private Gradebook gradebook = new();
         private string? currentFilePath = null; // Stores the current file path
         private bool isModified = false;       // Tracks whether the file has been modified
-        private bool allowPrereleaseUpdates = false;
         private float initialFontSize;
         private Size initialFormSize;
 
@@ -327,7 +326,7 @@ namespace SquigGrades
                 Text = $"Gradebook - Untitled{(isModified ? "*" : "")}";
             }
         }
-        private async Task CheckForUpdatesAsync()
+        public async Task CheckForUpdatesAsync()
         {
             string updateUrl = "https://raw.githubusercontent.com/Baldi627/squig-grades-version-check/main/version.json";
             try
@@ -337,53 +336,62 @@ namespace SquigGrades
 
                 Debug.WriteLine($"JSON Response: {jsonResponse}");
 
-                // Only support array format
-                var releases = System.Text.Json.JsonSerializer.Deserialize<List<UpdateInfo>>(jsonResponse);
+                var feed = System.Text.Json.JsonSerializer.Deserialize<UpdateFeed>(
+                    jsonResponse,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
 
-                if (releases == null || releases.Count == 0)
+                if (feed == null)
                 {
                     MessageBox.Show("No update information found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                // Find the latest stable release
-                var latestStable = releases
-                    .Where(r => !r.IsPrerelease)
-                    .OrderByDescending(r => new VersionWithSuffix(r.Version))
-                    .FirstOrDefault();
-                Debug.WriteLine($"Latest Stable Release: {latestStable?.Version}");
-                // Find the latest release (could be prerelease)
-                var latestAny = releases
-                    .OrderByDescending(r => new VersionWithSuffix(r.Version))
-                    .FirstOrDefault();
-                Debug.WriteLine($"Latest Any Release: {latestAny?.Version}");
+                // Compare versions
+                var stableVersion = new VersionWithSuffix(feed.Stable?.Version ?? "");
+                var prereleaseVersion = new VersionWithSuffix(feed.Prerelease?.Version ?? "");
                 var currentVersion = new VersionWithSuffix(Application.ProductVersion.Split('+')[0]);
 
-                // If prerelease updates are allowed and the latest is a prerelease and newer, notify for prerelease
-                if (appSettings.AllowPrereleaseUpdates && latestAny != null && new VersionWithSuffix(latestAny.Version).CompareTo(currentVersion) > 0)
+                // If prerelease is not newer than stable, always use stable
+                UpdateInfo updateInfo;
+                if (prereleaseVersion.CompareTo(stableVersion) <= 0)
                 {
-                    string prereleaseMessage = latestAny.IsPrerelease
-                        ? "\n\nNote: This is a prerelease version.\nAs such, it is not intended for production use."
-                        : "";
-
-                    Notifier.NotifyNewUpdate($"A new version of SquigGrades, {latestAny.Version}, is available to Download.", "Update Available", $"{prereleaseMessage}");
-                }
-
-                // Otherwise, only notify for the latest stable release
-                if (latestStable != null && new VersionWithSuffix(latestStable.Version).CompareTo(currentVersion) > 0)
-                {
-                    Notifier.NotifyNewUpdate($"A new stable version of SquigGrades, {latestStable.Version}, is available to Download.", "Update Available", "Please consider updating to the latest stable version.");
+                    updateInfo = feed.Stable;
                 }
                 else
                 {
-                    if (appSettings.AllowPrereleaseUpdates)
-                    {
-                        Notifier.NotifyNormal("You are currently using the Latest version of SquigGrades!", "No Updates");
-                    }
-                    else
-                    {
-                        Notifier.NotifyNormal("You are currently using the Latest Stable build of SquigGrades", "No Updates");
-                    }
+                    updateInfo = appSettings.AllowPrereleaseUpdates ? feed.Prerelease : feed.Stable;
+                }
+
+                Debug.WriteLine($"Update Info: Version={updateInfo.Version}, IsPrerelease={updateInfo.IsPrerelease}");
+                if (updateInfo == null || string.IsNullOrWhiteSpace(updateInfo.Version))
+                {
+                    Notifier.NotifyNormal("No update information found for the selected channel.", "No Updates");
+                    return;
+                }
+
+                var latestVersion = new VersionWithSuffix(updateInfo.Version);
+
+                if (latestVersion.CompareTo(currentVersion) > 0)
+                {
+                    string note = updateInfo.IsPrerelease
+                        ? "This is a prerelease build, and might be unstable."
+                        : "This is a Stable build.";
+
+                    Notifier.NotifyNewUpdate(
+                        $"A new version of SquigGrades, {updateInfo.Version}, is available to download.",
+                        $"Update {updateInfo.Version} available now!",
+                        note
+                    );
+                }
+                else
+                {
+                    Notifier.NotifyNormal(
+                        appSettings.AllowPrereleaseUpdates
+                            ? "You are currently using the latest version of SquigGrades!"
+                            : "You are currently using the latest stable build of SquigGrades.",
+                        "No Updates"
+                    );
                 }
             }
             catch (Exception ex)
@@ -408,7 +416,7 @@ namespace SquigGrades
             SettingsForm settingsForm = new SettingsForm();
             settingsForm.ShowDialog();
         }
-        private void SettingsForm_ColorSettingsChanged(object sender, EventArgs e)
+        private void SettingsForm_ColorSettingsChanged(object? sender, EventArgs e)
         {
             // Reapply colors when settings change
             ApplyAppColors();

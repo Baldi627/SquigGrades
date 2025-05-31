@@ -66,6 +66,7 @@ namespace SquigGrades
                 panelBackgroundPreview.BackColor = colorDialog1.Color;
                 appSettings.Save();
                 OnColorSettingsChanged();
+                Notifier.NotifyNormal("It is recommended that you restart SquigGrades to update the Background Color", $"Background Color Changed to {appSettings.BackgroundColor.ToString()}");
             }
         }
 
@@ -78,6 +79,7 @@ namespace SquigGrades
                 panelForegroundPreview.BackColor = colorDialog1.Color;
                 appSettings.Save();
                 OnColorSettingsChanged();
+                Notifier.NotifyNormal("It is recommended that you restart SquigGrades to update the Foreground Color", $"Foreground Color Changed to {appSettings.ForegroundColor.ToString()}");
             }
         }
     }

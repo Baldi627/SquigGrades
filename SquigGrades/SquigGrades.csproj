@@ -6,12 +6,18 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <FileVersion>2025.1.2.0</FileVersion>
+    <FileVersion>2025.1.2.1</FileVersion>
     <Company>$(Authors)</Company>
     <Authors>DefaultSquig</Authors>
-    <AssemblyVersion>2025.1.2.0</AssemblyVersion>
-    <Description>A Simple Gradebook app made for goofing around!</Description>
-    <Version>2025.1.2</Version>
+    <AssemblyVersion>2025.1.2.1</AssemblyVersion>
+    <Description>SquigGrades is a simple, quirky gradebook app designed for fun and experimentation! Whether you're pretending to be a teacher, making up wacky report cards for your friends, or just messing around with hypothetical grades, SquigGrades gives you an easy way to play with the idea of grading without any of the serious consequences.
+
+
+⚠️ Important Note: SquigGrades is not intended for use in real classrooms or official educational settings. It's a playful tool for personal amusement, creativity, and mock gradebook fun—not a substitute for professional grading software.
+
+
+So go ahead, get goofy with grades—just keep it out of the faculty meeting!</Description>
+    <Version>2025.1.2.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

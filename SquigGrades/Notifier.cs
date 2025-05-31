@@ -23,6 +23,8 @@ namespace SquigGrades
                 .AddText(title)
                 .AddText(message)
                 .AddAttributionText(note)
+                .SetToastScenario(ToastScenario.Reminder)
+                .AddAudio(new Uri("ms-winsoundevent:Notification.Reminder"))
                 .AddButton(new ToastButton()
                     .SetContent("Download Update")
                     .AddArgument("action", "downloadUpdate")

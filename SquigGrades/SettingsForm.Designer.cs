@@ -131,6 +131,11 @@
             // 
             toolTip1.IsBalloon = true;
             // 
+            // colorDialog1
+            // 
+            colorDialog1.AnyColor = true;
+            colorDialog1.FullOpen = true;
+            // 
             // btnDefautSettings
             // 
             btnDefautSettings.Dock = DockStyle.Bottom;
